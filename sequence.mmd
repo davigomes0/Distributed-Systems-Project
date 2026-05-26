@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant C as Cliente (Browser)
+    participant S as Servidor (Node.js/Socket.IO)
+    participant AC as Outros Clientes
+
+    Note over C, S: Início da Sessão
+    C->>S: Pedido de Upgrade HTTP para WebSocket
+    S-->>C: Upgrade Aceite (Conexão Estabelecida)
+    
+    Note right of S: Atualiza onlineUsers.add(socket.id)
+    
+    S->>C: Evento: online_count_update (Estado Inicial)
+    S->>AC: Evento: user_connected (Novo Utilizador)
+    S->>AC: Evento: online_count_update (Nova Contagem)
+
+    Note over C, S: Manutenção de Estado (Keep-Alive)
+    
+    Note over C, S: Encerramento
+    C->>S: Desconexão (Fechar Aba/Browser)
+    
+    Note right of S: Atualiza onlineUsers.delete(socket.id)
+    
+    S->>AC: Evento: user_disconnected
+    S->>AC: Evento: online_count_update (Nova Contagem)

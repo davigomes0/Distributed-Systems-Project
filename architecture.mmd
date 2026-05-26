@@ -1,0 +1,23 @@
+graph TD
+    subgraph "Camada de Cliente (Frontend)"
+        C1[Cliente 1 - Browser]
+        C2[Cliente 2 - Browser]
+        CN[Cliente N - Browser]
+    end
+
+    subgraph "Camada de Servidor (Backend)"
+        S1[Servidor Node.js + Express]
+        W1[Socket.IO Server]
+        ST[Estado: onlineUsers Set]
+    end
+
+    C1 <-->|WebSocket - Bidirecional| W1
+    C2 <-->|WebSocket - Bidirecional| W1
+    CN <-->|WebSocket - Bidirecional| W1
+
+    W1 --- S1
+    S1 --- ST
+
+    style S1 fill:#f9f,stroke:#333,stroke-width:2px
+    style W1 fill:#bbf,stroke:#333,stroke-width:2px
+    style ST fill:#dfd,stroke:#333,stroke-width:2px
