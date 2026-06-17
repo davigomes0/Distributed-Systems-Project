@@ -1,160 +1,191 @@
-# Sistema Web de Monitorização em Tempo Real de Utilizadores Online
+# Sistema Web de Monitoramento em Tempo Real de Usuários Online
 
 ## Visão Geral
 
-Este projeto didático implementa um sistema web capaz de exibir, em tempo real, a quantidade de utilizadores logados/conectados simultaneamente. A atualização dinâmica é realizada utilizando a tecnologia WebSocket, demonstrando conceitos fundamentais de Sistemas Distribuídos.
+Este projeto consiste no desenvolvimento de uma aplicação web capaz de monitorar e exibir, em tempo real, a quantidade de usuários conectados simultaneamente ao sistema. Para isso, foi utilizada a tecnologia WebSocket, que permite uma comunicação contínua entre cliente e servidor, tornando as atualizações instantâneas.
+
+Além de demonstrar o funcionamento de uma aplicação em tempo real, o projeto busca aplicar diversos conceitos estudados na disciplina de Sistemas Distribuídos.
+
+---
 
 ## Objetivos do Trabalho
 
-O principal objetivo deste sistema é ilustrar e aplicar os seguintes conceitos de Sistemas Distribuídos:
+O principal objetivo deste projeto é colocar em prática conceitos fundamentais de Sistemas Distribuídos, entre eles:
 
-*   **Comunicação em tempo real**: Através de WebSockets, o sistema mantém uma conexão persistente entre cliente e servidor para trocas de dados instantâneas.
-*   **Comunicação cliente-servidor**: Demonstra a interação entre um frontend web (cliente) e um backend Node.js (servidor).
-*   **Concorrência de múltiplos clientes**: O servidor é capaz de gerir e responder a múltiplas conexões de clientes simultaneamente.
-*   **Atualização distribuída de estado**: O estado do número de utilizadores online é mantido no servidor e distribuído para todos os clientes conectados.
-*   **Escalabilidade básica**: A arquitetura permite uma expansão futura para lidar com um número crescente de utilizadores e instâncias de servidor.
-*   **Sincronização entre múltiplos clientes conectados**: Todos os clientes recebem as mesmas atualizações de contagem de utilizadores em tempo real, garantindo uma visão consistente do estado do sistema.
+- Comunicação em tempo real utilizando WebSockets;
+- Modelo de comunicação cliente-servidor;
+- Gerenciamento de múltiplas conexões simultâneas;
+- Compartilhamento e sincronização de estado entre diferentes clientes;
+- Noções básicas de escalabilidade;
+- Atualização consistente das informações para todos os usuários conectados.
+
+Dessa forma, o sistema permite que todos os clientes visualizem a mesma quantidade de usuários online em tempo real, mantendo uma visão consistente do estado da aplicação.
+
+---
 
 ## Conceitos de Sistemas Distribuídos Aplicados
 
-### Comunicação Síncrona vs Assíncrona
+### Comunicação Síncrona e Assíncrona
 
-*   **Comunicação Síncrona**: Numa comunicação síncrona, o remetente espera por uma resposta antes de continuar a sua execução. Exemplos incluem chamadas de API REST tradicionais, onde o cliente envia um pedido e aguarda a resposta do servidor. Este modelo pode levar a bloqueios e menor eficiência em cenários de alta concorrência.
-*   **Comunicação Assíncrona**: Na comunicação assíncrona, o remetente envia uma mensagem e continua a sua execução sem esperar por uma resposta imediata. A resposta, quando chega, é tratada por um mecanismo de *callback* ou evento. WebSockets são um excelente exemplo de comunicação assíncrona, permitindo que tanto o cliente quanto o servidor enviem dados a qualquer momento, sem bloquear a outra parte. Isso é crucial para aplicações em tempo real, onde a baixa latência e a alta capacidade de resposta são essenciais.
+Na comunicação síncrona, o cliente precisa aguardar a resposta do servidor antes de continuar a execução. Um exemplo comum são as requisições HTTP tradicionais, nas quais uma solicitação é enviada e o processamento só continua após a resposta.
+
+Já na comunicação assíncrona, o cliente não precisa esperar uma resposta imediata. As mensagens podem ser tratadas posteriormente por meio de eventos ou callbacks. Esse modelo é amplamente utilizado em aplicações que exigem atualizações em tempo real.
+
+Neste projeto, os WebSockets utilizam comunicação assíncrona, permitindo que cliente e servidor troquem informações a qualquer momento sem bloquear a execução da aplicação.
 
 ### WebSocket
 
-WebSocket é um protocolo de comunicação que fornece canais de comunicação *full-duplex* (bidirecionais) sobre uma única conexão TCP. Ao contrário do HTTP, que é *half-duplex* e baseado em um modelo de pedido/resposta, o WebSocket permite que o servidor envie dados para o cliente a qualquer momento, e vice-versa, após o estabelecimento da conexão. Isso elimina a necessidade de *polling* constante (onde o cliente periodicamente pede atualizações ao servidor), reduzindo a latência e o tráfego de rede, tornando-o ideal para aplicações em tempo real como chats, jogos online e, como neste projeto, monitores de estado em tempo real.
+O WebSocket é um protocolo que possibilita comunicação bidirecional entre cliente e servidor através de uma única conexão TCP.
+
+Diferentemente do HTTP tradicional, que segue o modelo requisição-resposta, o WebSocket mantém uma conexão aberta durante toda a sessão. Isso permite que o servidor envie informações ao cliente sempre que necessário, sem que o navegador precise solicitar novas atualizações constantemente.
+
+Essa característica reduz a latência e o tráfego na rede, tornando o protocolo ideal para aplicações como chats, jogos online, notificações e monitoramento em tempo real.
 
 ### Estado Distribuído
 
-Em sistemas distribuídos, o **estado** refere-se aos dados e informações que descrevem a condição atual do sistema. Um **estado distribuído** significa que esses dados não residem num único local, mas são replicados ou partilhados entre múltiplos nós ou componentes do sistema. Neste projeto, o número de utilizadores online é um exemplo de estado distribuído. Embora a contagem principal seja mantida no servidor Node.js, essa informação é constantemente partilhada e sincronizada com todos os clientes conectados, que por sua vez exibem esse estado de forma consistente. O desafio é garantir a consistência e a atualização em tempo real desse estado em todos os pontos do sistema.
+Em sistemas distribuídos, o estado representa as informações que descrevem a situação atual da aplicação.
+
+Neste projeto, o estado corresponde à quantidade de usuários conectados. Embora essa informação seja mantida pelo servidor, ela é compartilhada continuamente com todos os clientes conectados. Assim, todos os usuários visualizam os mesmos dados atualizados em tempo real.
+
+Um dos desafios desse modelo é garantir que todas as partes do sistema permaneçam sincronizadas, evitando inconsistências entre as informações exibidas.
 
 ### Concorrência
 
-**Concorrência** refere-se à capacidade de um sistema de lidar com múltiplas tarefas ou processos que progridem independentemente, aparentemente ao mesmo tempo. Num sistema distribuído, isso significa que vários clientes podem interagir com o servidor simultaneamente. O servidor deve ser projetado para gerir essas interações concorrentes de forma eficiente, garantindo que as operações (como adicionar ou remover um utilizador) sejam processadas corretamente e que o estado do sistema seja atualizado de forma atómica e consistente, evitando condições de corrida e inconsistências de dados. O `Socket.IO` e o `Node.js` são particularmente adequados para lidar com concorrência devido ao seu modelo de E/S não bloqueante e baseado em eventos.
+A concorrência está relacionada à capacidade de um sistema lidar com várias operações acontecendo simultaneamente.
+
+No contexto deste projeto, diversos usuários podem acessar a aplicação ao mesmo tempo. O servidor precisa processar todas essas conexões de forma eficiente, garantindo que a contagem de usuários online permaneça correta mesmo quando várias conexões e desconexões ocorrem simultaneamente.
+
+O Node.js, juntamente com o Socket.IO, facilita esse processo por utilizar uma arquitetura orientada a eventos e operações de entrada e saída não bloqueantes.
 
 ### Escalabilidade
 
-**Escalabilidade** é a capacidade de um sistema de lidar com um volume crescente de trabalho ou de se adaptar a um aumento na demanda. Existem dois tipos principais:
+Escalabilidade é a capacidade de um sistema continuar funcionando adequadamente à medida que a quantidade de usuários aumenta.
 
-*   **Escalabilidade Vertical (Scale Up)**: Aumentar os recursos de um único servidor (CPU, RAM, disco).
-*   **Escalabilidade Horizontal (Scale Out)**: Adicionar mais servidores ou nós ao sistema para distribuir a carga. Este é o método preferido em sistemas distribuídos.
+Ela pode ocorrer de duas formas:
 
-Este projeto, embora simples, é construído com uma arquitetura que favorece a escalabilidade horizontal, especialmente se considerarmos a adição de um mecanismo como Redis Pub/Sub para sincronizar múltiplas instâncias do servidor, conforme sugerido nas melhorias futuras.
+- **Escalabilidade Vertical (Scale Up):** aumento dos recursos de um único servidor, como memória e processamento;
+- **Escalabilidade Horizontal (Scale Out):** adição de novos servidores para distribuir a carga de trabalho.
 
-### Tolerância a Falhas Básica
+Embora este projeto tenha caráter didático, sua arquitetura permite futuras expansões para um ambiente distribuído mais robusto, utilizando mecanismos de sincronização entre múltiplas instâncias do servidor.
 
-**Tolerância a falhas** é a capacidade de um sistema continuar a operar corretamente mesmo na presença de falhas em um ou mais dos seus componentes. Num sistema distribuído, as falhas podem ocorrer em redes, servidores ou clientes. Este projeto demonstra uma tolerância a falhas básica ao lidar com a desconexão de clientes: o sistema deteta automaticamente quando um cliente sai e atualiza a contagem global sem interromper o serviço para os restantes. Para uma tolerância a falhas mais robusta em cenários de produção, seriam necessários mecanismos como replicação de dados, *failover* automático e balanceamento de carga.
+### Tolerância a Falhas
+
+A tolerância a falhas representa a capacidade de um sistema continuar operando mesmo diante de problemas em alguns de seus componentes.
+
+Neste projeto, existe uma forma simples de tolerância a falhas: quando um usuário perde a conexão ou fecha o navegador, o servidor detecta automaticamente a desconexão e atualiza a contagem de usuários online sem comprometer o funcionamento dos demais clientes conectados.
+
+Em aplicações de produção, técnicas adicionais como replicação, balanceamento de carga e failover automático seriam necessárias para aumentar a confiabilidade do sistema.
 
 ### Comunicação Orientada a Eventos
 
-Na **comunicação orientada a eventos**, os componentes do sistema interagem através do envio e receção de eventos. Um evento é uma notificação de que algo significativo aconteceu. Em vez de chamar funções diretamente, os componentes *emitem* eventos e outros componentes *ouvem* esses eventos e reagem a eles. O `Socket.IO` é um exemplo paradigmático de comunicação orientada a eventos, onde o servidor emite eventos como `user_connected` ou `online_count_update`, e os clientes ouvem e reagem a esses eventos para atualizar a sua interface. Este modelo desacopla os componentes, tornando o sistema mais flexível e escalável.
+A comunicação orientada a eventos é baseada na troca de mensagens chamadas eventos.
+
+Nesse modelo, um componente emite um evento quando determinada ação ocorre, enquanto outros componentes ficam responsáveis por escutar e reagir a esses eventos.
+
+O Socket.IO utiliza exatamente esse paradigma. Sempre que um usuário se conecta ou desconecta, eventos são disparados e recebidos pelos clientes, permitindo a atualização automática da interface.
+
+Essa abordagem reduz o acoplamento entre os componentes e facilita a manutenção e expansão do sistema.
 
 ### Broadcast em Sistemas Distribuídos
 
-**Broadcast** é um padrão de comunicação onde uma mensagem é enviada de um remetente para todos os recetores disponíveis numa rede ou grupo. Em sistemas distribuídos, o *broadcast* é essencial para manter a consistência do estado em tempo real entre múltiplos clientes. Neste projeto, quando um utilizador se conecta ou desconecta, o servidor utiliza o mecanismo de *broadcast* do `Socket.IO` (`io.emit()`) para enviar a atualização da contagem de utilizadores online para *todos* os clientes conectados. Isso garante que todos os utilizadores vejam a mesma informação atualizada simultaneamente.
+Broadcast é uma técnica de comunicação na qual uma mensagem é enviada simultaneamente para todos os participantes conectados.
+
+Neste projeto, sempre que ocorre uma alteração no número de usuários online, o servidor utiliza o método `io.emit()` para enviar a nova informação para todos os clientes conectados.
+
+Dessa forma, todos os usuários recebem a atualização praticamente ao mesmo tempo, garantindo consistência nas informações exibidas.
+
+---
 
 ## Arquitetura do Sistema
 
-O sistema segue uma arquitetura **cliente-servidor** com comunicação bidirecional em tempo real, conforme ilustrado no diagrama abaixo.
+O sistema segue uma arquitetura cliente-servidor baseada em comunicação bidirecional em tempo real. Cada cliente estabelece uma conexão WebSocket com o servidor, permitindo o envio e recebimento de dados sem a necessidade de novas requisições HTTP.
 
 ### Diagrama de Arquitetura
 
 ```mermaid
 graph TD
-    subgraph "Camada de Cliente (Frontend)"
-        C1[Cliente 1 - Browser]
-        C2[Cliente 2 - Browser]
-        CN[Cliente N - Browser]
+    subgraph "Frontend"
+        C1[Cliente 1]
+        C2[Cliente 2]
+        CN[Cliente N]
     end
 
-    subgraph "Camada de Servidor (Backend)"
+    subgraph "Backend"
         S1[Servidor Node.js + Express]
-        W1[Socket.IO Server]
-        ST[Estado: onlineUsers Set]
+        WS[Socket.IO]
+        ST[onlineUsers]
     end
 
-    C1 <-->|WebSocket - Bidirecional| W1
-    C2 <-->|WebSocket - Bidirecional| W1
-    CN <-->|WebSocket - Bidirecional| W1
+    C1 <-->|WebSocket| WS
+    C2 <-->|WebSocket| WS
+    CN <-->|WebSocket| WS
 
-    W1 --- S1
+    WS --- S1
     S1 --- ST
-
-    style S1 fill:#f9f,stroke:#333,stroke-width:2px
-    style W1 fill:#bbf,stroke:#333,stroke-width:2px
-    style ST fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
-**Explicação da Arquitetura:**
+### Funcionamento da Arquitetura
 
-*   **Camada de Cliente (Frontend)**: Composta por múltiplos navegadores web (Clientes 1 a N) que executam a aplicação frontend (HTML, CSS, JavaScript). Cada cliente estabelece uma conexão WebSocket individual com o servidor.
-*   **Camada de Servidor (Backend)**: Consiste num servidor Node.js que utiliza o framework Express para gerir rotas HTTP básicas (embora neste projeto seja principalmente para servir ficheiros estáticos e uma rota de saúde) e o `Socket.IO` para gerir as conexões WebSocket.
-*   **Socket.IO Server**: É o coração da comunicação em tempo real. Ele lida com o estabelecimento e a manutenção das conexões WebSocket, bem como com o envio e receção de mensagens.
-*   **Estado (`onlineUsers` Set)**: Uma estrutura de dados em memória no servidor que armazena os IDs únicos de todos os clientes atualmente conectados. Este é o 
-representante do estado distribuído neste projeto.
+- Os clientes acessam a aplicação pelo navegador;
+- O servidor Node.js gerencia as conexões;
+- O Socket.IO mantém a comunicação em tempo real;
+- O conjunto `onlineUsers` armazena os identificadores dos usuários conectados;
+- Sempre que uma conexão é criada ou encerrada, todos os clientes recebem uma atualização da contagem.
 
-### Fluxo de Comunicação Cliente-Servidor
+---
 
-O fluxo de comunicação entre o cliente e o servidor é essencialmente bidirecional e orientado a eventos, conforme detalhado no fluxograma abaixo.
+## Fluxo de Comunicação Cliente-Servidor
 
 ```mermaid
 sequenceDiagram
-    participant C as Cliente (Browser)
-    participant S as Servidor (Node.js/Socket.IO)
-    participant AC as Outros Clientes
+    participant C as Cliente
+    participant S as Servidor
+    participant O as Outros Clientes
 
-    Note over C, S: Início da Sessão
-    C->>S: Pedido de Upgrade HTTP para WebSocket
-    S-->>C: Upgrade Aceite (Conexão Estabelecida)
-    
-    Note right of S: Atualiza onlineUsers.add(socket.id)
-    
-    S->>C: Evento: online_count_update (Estado Inicial)
-    S->>AC: Evento: user_connected (Novo Utilizador)
-    S->>AC: Evento: online_count_update (Nova Contagem)
+    C->>S: Solicita conexão WebSocket
+    S-->>C: Conexão estabelecida
 
-    Note over C, S: Manutenção de Estado (Keep-Alive)
-    
-    Note over C, S: Encerramento
-    C->>S: Desconexão (Fechar Aba/Browser)
-    
-    Note right of S: Atualiza onlineUsers.delete(socket.id)
-    
-    S->>AC: Evento: user_disconnected
-    S->>AC: Evento: online_count_update (Nova Contagem)
+    S->>C: online_count_update
+    S->>O: user_connected
+    S->>O: online_count_update
+
+    C->>S: Desconexão
+
+    S->>O: user_disconnected
+    S->>O: online_count_update
 ```
 
-**Explicação do Fluxo:**
+### Descrição do Fluxo
 
-1.  **Conexão Inicial**: O cliente (navegador) faz um pedido HTTP ao servidor. O servidor responde com um `Upgrade` para o protocolo WebSocket.
-2.  **Estabelecimento da Conexão**: Uma vez que o upgrade é aceite, uma conexão WebSocket *full-duplex* é estabelecida entre o cliente e o servidor.
-3.  **Registo de Utilizador**: No servidor, o `socket.id` do novo cliente é adicionado ao conjunto `onlineUsers`.
-4.  **Broadcast de Conexão**: O servidor emite um evento `user_connected` para *todos* os clientes (incluindo o recém-conectado) e um evento `online_count_update` com a nova contagem total de utilizadores online. Isso garante que todos os clientes tenham uma visão consistente do número de utilizadores.
-5.  **Desconexão**: Quando um cliente fecha a aba do navegador ou perde a conexão, o evento `disconnect` é acionado no servidor.
-6.  **Atualização de Desconexão**: O `socket.id` do cliente desconectado é removido de `onlineUsers`. O servidor então emite eventos `user_disconnected` e `online_count_update` para todos os clientes restantes, informando sobre a mudança na contagem.
+1. O cliente solicita a conexão ao servidor.
+2. Após a autenticação do WebSocket, a conexão é estabelecida.
+3. O servidor registra o novo usuário conectado.
+4. A contagem atualizada é enviada para todos os clientes.
+5. Quando um usuário se desconecta, ele é removido da estrutura de controle.
+6. O servidor envia novamente a nova contagem para todos os clientes conectados.
+
+---
 
 ## Tecnologias Utilizadas
 
 ### Backend
 
-*   **Node.js**: Ambiente de execução JavaScript assíncrono e orientado a eventos, ideal para aplicações em tempo real.
-*   **Express**: Framework web minimalista e flexível para Node.js, utilizado para configurar o servidor HTTP e servir ficheiros estáticos.
-*   **Socket.IO**: Biblioteca para comunicação bidirecional em tempo real baseada em eventos. Abstrai a complexidade dos WebSockets e oferece *fallbacks* para navegadores mais antigos.
+- **Node.js:** ambiente de execução JavaScript voltado para aplicações escaláveis.
+- **Express:** framework responsável pela criação do servidor HTTP.
+- **Socket.IO:** biblioteca utilizada para comunicação em tempo real entre cliente e servidor.
 
 ### Frontend
 
-*   **HTML5**: Linguagem de marcação para estruturar o conteúdo da página web.
-*   **CSS3**: Linguagem de folhas de estilo para estilizar a interface do utilizador.
-*   **JavaScript Puro**: Linguagem de programação para a lógica interativa do lado do cliente, incluindo a conexão e manipulação do WebSocket e a atualização do gráfico.
-*   **Chart.js**: Biblioteca JavaScript de código aberto para visualização de dados, utilizada para criar o gráfico de linha em tempo real.
+- **HTML5:** estrutura da aplicação.
+- **CSS3:** estilização da interface.
+- **JavaScript:** lógica da aplicação no navegador.
+- **Chart.js:** geração dos gráficos em tempo real.
+
+---
 
 ## Estrutura do Projeto
 
-O projeto está organizado na seguinte estrutura de diretórios:
-
-```
+```text
 distributed-systems-project/
 ├── server/
 │   ├── server.js
@@ -165,107 +196,127 @@ distributed-systems-project/
 │   ├── style.css
 │   └── script.js
 │
-└── README.md
-└── architecture.mmd
-└── architecture.png
-└── sequence.mmd
+├── README.md
+├── architecture.mmd
+├── architecture.png
+├── sequence.mmd
 └── sequence.png
 ```
 
-*   `server/`: Contém os ficheiros do backend Node.js.
-    *   `server.js`: Lógica principal do servidor Express e Socket.IO.
-    *   `package.json`: Metadados do projeto e lista de dependências do backend.
-*   `client/`: Contém os ficheiros do frontend web.
-    *   `index.html`: Estrutura da página web.
-    *   `style.css`: Estilos CSS para a interface.
-    *   `script.js`: Lógica JavaScript do cliente, incluindo a conexão WebSocket e a manipulação do Chart.js.
-*   `README.md`: Este ficheiro, contendo a documentação completa do projeto.
-*   `architecture.mmd`: Ficheiro fonte do diagrama de arquitetura (Mermaid).
-*   `architecture.png`: Imagem PNG do diagrama de arquitetura.
-*   `sequence.mmd`: Ficheiro fonte do fluxograma de comunicação (Mermaid).
-*   `sequence.png`: Imagem PNG do fluxograma de comunicação.
+### Organização dos Arquivos
+
+#### Backend
+
+- `server.js`: implementação do servidor e dos eventos Socket.IO.
+- `package.json`: dependências e configurações do projeto.
+
+#### Frontend
+
+- `index.html`: estrutura da página.
+- `style.css`: estilos visuais.
+- `script.js`: lógica do cliente e comunicação com o servidor.
+
+#### Documentação
+
+- `README.md`: documentação do projeto.
+- Arquivos `.mmd` e `.png`: diagramas da arquitetura e do fluxo de comunicação.
+
+---
 
 ## Funcionalidades Técnicas
 
-### Backend (`server.js`)
+### Backend
 
-*   **Servidor HTTP**: Cria um servidor HTTP básico usando Express para servir o frontend e fornecer uma rota de saúde.
-*   **Servidor WebSocket**: Inicia um servidor WebSocket com Socket.IO, escutando por novas conexões.
-*   **Controlo de Utilizadores Conectados**: Mantém um conjunto (`onlineUsers`) em memória para rastrear os IDs de todos os clientes conectados.
-*   **Eventos em Broadcast**: Envia eventos (`user_connected`, `user_disconnected`, `online_count_update`) para todos os clientes conectados sempre que há uma mudança no número de utilizadores online.
-*   **Atualização da Contagem Global**: A contagem de utilizadores é atualizada em tempo real e transmitida para todos os clientes.
+- Inicialização do servidor HTTP;
+- Gerenciamento das conexões WebSocket;
+- Controle dos usuários online;
+- Atualização automática da contagem de usuários;
+- Envio de eventos para todos os clientes conectados.
 
-### Frontend (`index.html`, `style.css`, `script.js`)
+### Frontend
 
-*   **Conexão Automática ao WebSocket**: O `script.js` estabelece automaticamente uma conexão com o servidor WebSocket ao carregar a página.
-*   **Receção de Atualizações em Tempo Real**: O cliente ouve os eventos emitidos pelo servidor (`online_count_update`, `user_connected`, `user_disconnected`) e reage a eles.
-*   **Atualização Dinâmica do Gráfico**: O Chart.js é utilizado para exibir um gráfico de linha que mostra o número de utilizadores online ao longo do tempo, com novos pontos adicionados dinamicamente sem recarregar a página.
-*   **Contador de Utilizadores Online**: Um elemento na interface exibe a contagem atual de utilizadores online.
-*   **Histórico Simples de Conexões**: Um log de eventos mostra as ações de conexão e desconexão dos utilizadores.
+- Conexão automática ao servidor;
+- Atualização da interface em tempo real;
+- Exibição da quantidade de usuários online;
+- Registro de eventos de conexão e desconexão;
+- Atualização dinâmica do gráfico sem recarregar a página.
 
-### Sobre o Gráfico
+### Gráfico em Tempo Real
 
-O gráfico de linha em tempo real apresenta:
+O gráfico apresenta:
 
-*   **Eixo X**: Tempo (timestamps).
-*   **Eixo Y**: Número de utilizadores online.
+- **Eixo X:** tempo das atualizações;
+- **Eixo Y:** quantidade de usuários online.
 
-O gráfico é atualizado dinamicamente, adicionando novos pontos à medida que a contagem de utilizadores muda e mantendo um histórico dos últimos `N` pontos para visualização.
+Os dados são atualizados automaticamente sempre que ocorre alguma alteração na quantidade de usuários conectados.
+
+---
 
 ## Tutorial de Execução
 
-Siga os passos abaixo para configurar e executar o projeto:
+### Pré-requisitos
 
-1.  **Pré-requisitos**:
-    *   Certifique-se de ter o [Node.js](https://nodejs.org/) e o [npm](https://www.npmjs.com/) (gerenciador de pacotes do Node.js) instalados na sua máquina.
+É necessário possuir instalados:
 
-2.  **Clonar o Repositório (ou criar os ficheiros manualmente)**:
-    ```bash
-    git clone <URL_DO_REPOSITORIO> # Se estiver num repositório Git
-    cd distributed-systems-project
-    ```
-    Ou, se criou os ficheiros manualmente, navegue até a pasta `distributed-systems-project`.
+- Node.js;
+- npm.
 
-3.  **Instalar Dependências do Backend**:
-    Navegue até o diretório `server` e instale as dependências:
-    ```bash
-    cd server
-    npm install
-    ```
-    Isso instalará `express` e `socket.io`.
+### Instalação
 
-4.  **Iniciar o Servidor Backend**:
-    No diretório `server`, execute o servidor:
-    ```bash
-    npm start
-    ```
-    Você deverá ver uma mensagem no console indicando que o servidor está a correr na porta 3000 (ou outra porta configurada).
+Clone o projeto:
 
-5.  **Aceder ao Frontend**:
-    Abra o ficheiro `client/index.html` no seu navegador web. Alternativamente, se o servidor Express estiver a servir os ficheiros estáticos (como configurado neste projeto), pode aceder a `http://localhost:3000` no seu navegador.
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd distributed-systems-project
+```
 
-6.  **Testar a Aplicação**:
-    *   Abra várias abas ou janelas do navegador para simular múltiplos utilizadores.
-    *   Observe o contador de 
-utilizadores online e o gráfico a atualizar em tempo real em todas as abas/janelas.
-    *   Feche algumas abas para ver a contagem a diminuir.
+Instale as dependências:
 
-## Sugestões de Melhorias Futuras
+```bash
+cd server
+npm install
+```
 
-Este projeto serve como uma base didática. Para expandir e aprimorar o sistema, as seguintes melhorias podem ser consideradas:
+### Execução
 
-*   **Autenticação Simples por Nome**: Implementar um sistema onde os utilizadores possam inserir um nome ao conectar, permitindo identificá-los no log de eventos e, potencialmente, no gráfico.
-*   **Múltiplas Salas/Canais**: Adicionar a funcionalidade de criar diferentes 
-salas ou canais de chat, onde a contagem de utilizadores online seria específica para cada sala.
-*   **Persistência em Banco de Dados**: Armazenar o histórico de contagens de utilizadores ou eventos de conexão/desconexão num banco de dados (e.g., MongoDB, PostgreSQL) para análise posterior ou para exibir dados históricos mais longos.
-*   **Dashboard Moderno**: Melhorar a interface do utilizador com um dashboard mais interativo e visualmente apelativo, talvez utilizando um framework de UI mais robusto como React ou Vue.js.
-*   **Suporte a Múltiplas Instâncias do Servidor**: Para uma escalabilidade horizontal real, implementar um mecanismo de sincronização entre múltiplas instâncias do servidor Node.js. O [Redis Pub/Sub](https://redis.io/topics/pubsub) é uma solução comum para este cenário, permitindo que as instâncias do Socket.IO se comuniquem e partilhem o estado dos utilizadores.
+Inicie o servidor:
 
-## Comentários no Código
+```bash
+npm start
+```
 
-O código-fonte (`server.js` e `script.js`) está amplamente comentado para facilitar a compreensão de cada secção e da lógica implementada, especialmente no que diz respeito à interação com WebSockets e à gestão do estado de utilizadores.
+Após a inicialização, acesse:
 
---- 
+```text
+http://localhost:3000
+```
 
-**Autor:** Manus AI
-**Nível do Projeto:** Académico Universitário
+### Testes
+
+Para verificar o funcionamento:
+
+1. Abra a aplicação em múltiplas abas.
+2. Observe a atualização do contador de usuários.
+3. Feche algumas abas.
+4. Verifique a atualização em tempo real para todos os clientes conectados.
+
+---
+
+## Possíveis Melhorias
+
+Algumas evoluções que podem ser implementadas futuramente incluem:
+
+- Autenticação de usuários por nome;
+- Criação de salas independentes;
+- Persistência de dados em banco de dados;
+- Dashboard mais moderno utilizando React ou Vue;
+- Integração com Redis Pub/Sub para sincronização entre múltiplas instâncias do servidor;
+- Implementação de balanceamento de carga para cenários de maior escala.
+
+---
+
+## Considerações Finais
+
+Este projeto permitiu aplicar conceitos importantes de Sistemas Distribuídos em um cenário prático, explorando comunicação em tempo real, gerenciamento de múltiplos clientes, sincronização de estado e arquitetura orientada a eventos.
+
+Apesar de ser uma aplicação simples, a solução apresenta uma base sólida para evoluções futuras e demonstra como tecnologias como WebSocket e Socket.IO podem ser utilizadas para construir sistemas distribuídos capazes de fornecer atualizações instantâneas aos usuários.
