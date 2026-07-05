@@ -1,106 +1,112 @@
-# Backend - Sistema de Monitoramento em Tempo Real
+# Backend - Monitor de Sistemas Distribuídos
 
-Backend Node.js com WebSocket para monitoramento de usuários online em tempo real.
+Servidor Node.js com WebSocket para monitoramento de usuários online em tempo real.
 
-## Tecnologias
+## Stack
 
 - Node.js + Express
-- Socket.IO (WebSocket)
-- dotenv (variáveis de ambiente)
+- Socket.IO 4.7
+- dotenv
 
-## Configuração Local
+## Como Rodar
 
-1. Instale as dependências:
 ```bash
 npm install
-```
-
-2. Configure as variáveis de ambiente:
-```bash
 cp .env.example .env
-```
-
-3. Edite o arquivo `.env` e configure a URL do frontend:
-```env
-FRONTEND_URL=http://localhost:3000
-```
-
-4. Inicie o servidor:
-```bash
+# Edite .env com a URL do frontend
 npm start
+# Servidor em http://localhost:3000
 ```
 
-O servidor estará rodando em `http://localhost:3000`.
-
-## Deploy no Render
-
-### Passo 1: Criar conta no Render
-- Acesse [render.com](https://render.com)
-- Faça login com GitHub
-
-### Passo 2: Criar Web Service
-1. Clique em **New +** → **Web Service**
-2. Conecte seu repositório do GitHub
-3. Configure:
-   - **Name:** `distributed-systems-backend` (ou qualquer nome)
-   - **Root Directory:** `backend`
-   - **Environment:** `Node`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-   - **Plan:** `Free`
-
-### Passo 3: Configurar Variáveis de Ambiente
-No painel do Render, vá em **Environment** e adicione:
+## Estrutura
 
 ```
-FRONTEND_URL=https://seu-frontend.vercel.app
+backend/
+├── server.js       # Servidor HTTP, configuração Socket.IO e eventos
+├── package.json
+├── .env            # Variáveis locais (não vai pro git)
+└── .env.example    # Template
 ```
 
-**Importante:** Depois que fizer o deploy do frontend no Vercel, volte aqui e atualize essa variável com a URL real.
+## Como Funciona
 
-### Passo 4: Deploy
-- Clique em **Create Web Service**
-- Aguarde o build completar (3-5 minutos)
-- Copie a URL gerada (ex: `https://seu-app.onrender.com`)
+### Inicialização
 
-### Passo 5: Testar
-Acesse `https://seu-app.onrender.com/status` para verificar se está funcionando:
+```js
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',')
+  : ['http://localhost:3000'];
 
+const io = new Server(server, {
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true }
+});
+```
+
+`FRONTEND_URL` aceita múltiplas origens separadas por vírgula. Em produção, deve receber a URL do Vercel.
+
+### Estado
+
+```js
+let onlineUsers = new Set();
+```
+
+Um `Set` garante que cada `socket.id` apareça uma única vez. O tamanho (`onlineUsers.size`) é a fonte da verdade da contagem.
+
+### Eventos Socket.IO
+
+**Conexão:**
+```js
+io.on('connection', (socket) => {
+  onlineUsers.add(socket.id);
+  io.emit('user_connected', { id, count, timestamp });
+  io.emit('online_count_update', { count, timestamp });
+});
+```
+
+**Desconexão:**
+```js
+socket.on('disconnect', () => {
+  onlineUsers.delete(socket.id);
+  io.emit('user_disconnected', { id, count, timestamp });
+  io.emit('online_count_update', { count, timestamp });
+});
+```
+
+`io.emit()` faz broadcast para todos os clientes conectados. `socket.emit()` enviaria apenas para aquele cliente.
+
+### Rota HTTP
+
+```
+GET /status
+```
+
+Retorna:
 ```json
 {
   "status": "online",
-  "online_count": 0,
+  "online_count": 3,
   "uptime": 42.5
 }
 ```
 
+Útil para verificar se o servidor está de pé antes de abrir o frontend.
+
 ## Variáveis de Ambiente
 
-| Variável | Descrição | Exemplo |
-|----------|-----------|---------|
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
 | `PORT` | Porta do servidor (Render define automaticamente) | `3000` |
-| `FRONTEND_URL` | URL do frontend (aceita múltiplas separadas por vírgula) | `https://app.vercel.app` |
+| `FRONTEND_URL` | URL do frontend, separe múltiplas com vírgula | `http://localhost:3000` |
 
-## Endpoints
+## Deploy no Render
 
-- `GET /status` - Status do servidor e contagem de usuários
-- WebSocket em `/` - Conexão em tempo real
+1. Crie um **Web Service** apontando para este repositório
+2. Configure:
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Plan:** Free
+3. Adicione a variável de ambiente `FRONTEND_URL` com a URL do Vercel
+4. Após deploy, teste em: `https://sua-url.onrender.com/status`
 
-## Eventos WebSocket
-
-### Enviados pelo servidor:
-- `user_connected` - Novo usuário conectou
-- `user_disconnected` - Usuário desconectou
-- `online_count_update` - Atualização da contagem
-
-## Troubleshooting
-
-### CORS Error
-Se receber erro de CORS, verifique se a `FRONTEND_URL` está configurada corretamente no Render.
-
-### WebSocket não conecta
-- Verifique se o Render está rodando (plan free dorme após 15 min de inatividade)
-- Confirme que está usando `https://` na URL de produção
-
-### Servidor reinicia sozinho
-No plano gratuito do Render, o servidor dorme após 15 minutos sem requisições. A primeira requisição pode demorar ~30 segundos para "acordar".
+**Atenção:** No plano gratuito o servidor dorme após 15 minutos sem requisições. A primeira conexão pode demorar ~30 segundos para acordar.
